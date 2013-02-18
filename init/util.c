@@ -393,6 +393,9 @@ void open_devnull_stdio(void)
 void get_hardware_name(char *hardware, unsigned int *revision)
 {
     char data[1024];
+#ifdef CONFIG_KERNEL_DEVICE_TREE
+    char dt_model[1024];
+#endif
     int fd, n;
     char *x, *hw, *rev;
 
@@ -408,9 +411,21 @@ void get_hardware_name(char *hardware, unsigned int *revision)
     if (n < 0) return;
 
     data[n] = 0;
+#ifndef CONFIG_KERNEL_DEVICE_TREE
     hw = strstr(data, "\nHardware");
+#else
+    fd = open("/proc/device-tree/model", O_RDONLY);
+    if (fd < 0) return;
+
+    n = read(fd, dt_model, 1023);
+    close(fd);
+    if (n < 0) return;
+
+    dt_model[n] = 0;
+#endif
     rev = strstr(data, "\nRevision");
 
+#ifndef CONFIG_KERNEL_DEVICE_TREE
     if (hw) {
         x = strstr(hw, ": ");
         if (x) {
@@ -425,6 +440,17 @@ void get_hardware_name(char *hardware, unsigned int *revision)
             hardware[n] = 0;
         }
     }
+#else
+    x = dt_model;
+    n = 0;
+    while (*x && *x != '\n') {
+        if (!isspace(*x))
+            hardware[n++] = tolower(*x);
+        x++;
+        if (n == 31) break;
+    }
+    hardware[n] = 0;
+#endif
 
     if (rev) {
         x = strstr(rev, ": ");

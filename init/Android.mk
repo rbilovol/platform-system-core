@@ -23,6 +23,10 @@ LOCAL_SRC_FILES += bootchart.c
 LOCAL_CFLAGS    += -DBOOTCHART=1
 endif
 
+ifeq ($(strip $(CONFIG_KERNEL_DEVICE_TREE)),true)
+LOCAL_CFLAGS    += -DCONFIG_KERNEL_DEVICE_TREE=1
+endif
+
 ifneq (,$(filter userdebug eng,$(TARGET_BUILD_VARIANT)))
 LOCAL_CFLAGS += -DALLOW_LOCAL_PROP_OVERRIDE=1
 endif
